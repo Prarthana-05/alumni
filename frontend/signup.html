@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Secure Registration</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="auth-page">
+
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h2>Secure Registration</h2>
+                <p>Verify your identity via institutional records</p>
+            </div>
+
+            <form id="signupForm">
+                <div class="form-group">
+                    <label>Registration Role</label>
+                    <div class="input-icon">
+                        <i class="fas fa-id-badge"></i>
+                        <select id="role" required onchange="handleRoleUI()">
+                            <option value="student">Student</option>
+                            <option value="alumni">Alumni</option>
+                            <option value="admin">Admin / Faculty</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label id="idLabel">Institutional ID / Roll No</label>
+                    <div class="input-icon">
+                        <i class="fas fa-hashtag"></i>
+                        <input type="text" id="regId" placeholder="e.g. 2021CS101" required>
+                    </div>
+                </div>
+
+                <div id="adminField" style="display: none;">
+                    <div class="form-group">
+                        <label>Admin Access Key</label>
+                        <div class="input-icon">
+                            <i class="fas fa-key"></i>
+                            <input type="password" id="adminKey" placeholder="Enter special faculty key">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Official .edu Email</label>
+                    <div class="input-icon">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" placeholder="username@institute.edu" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Set Password</label>
+                    <div class="input-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Verify & Sign Up</button>
+            </form>
+            
+            <div id="messageBox"></div>
+            
+            <div class="auth-footer">
+                <p>Already have an account? <a href="login.html">Login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/signup.js"></script>
+</body>
+</html>
