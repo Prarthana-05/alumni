@@ -8,10 +8,10 @@ const router = express.Router();
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-
         const user = await User.findOne({ email });
+        
         if (!user) {
-            return res.status(400).json({ message: "Invalid credentials" }); // Changed msg to message to match frontend
+            return res.status(400).json({ message: "Invalid credentials" });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
@@ -27,15 +27,15 @@ router.post('/login', async (req, res) => {
 
         jwt.sign(
             payload,
-            process.env.JWT_SECRET || 'secret', // Fallback for safety
+            process.env.JWT_SECRET || 'secret',
             { expiresIn: '1h' },
             (err, token) => {
                 if (err) throw err;
                 res.json({
                     token,
                     user: {
-                        _id: user._id,      // <--- CRITICAL: Send the MongoDB ID
-                        id: user.regId,    // This is the roll number (e.g., "23")
+                        _id: user._id,
+                        id: user.regId,
                         role: user.role,
                         verified: user.isVerified
                     }
@@ -48,40 +48,37 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// ---------------- SIGNUP ----------------
-router.post('/signup', async (req, res) => {
+// ---------------- SIGNUP (Fixed Route Name) ----------------
+router.post('/register', async (req, res) => { // Changed from /signup to /register to match your JS
     try {
-        const { email, regId, password, role } = req.body;
+        const { regId, email, password, role, year, graduationYear,branch } = req.body;
 
-        if (!email.endsWith('.edu')) {
-            return res.status(400).json({ message: "Only .edu emails allowed" });
+        // Check if user already exists
+        const existingUser = await User.findOne({ $or: [{ email }, { regId }] });
+        if (existingUser) {
+            return res.status(400).json({ message: "User with this Email or Roll No already exists" });
         }
 
-        let user = await User.findOne({ email });
-        if (user) {
-            return res.status(400).json({ message: "User already registered" });
-        }
-
+        // 🔥 CRITICAL: Hash the password before saving
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        user = new User({
+        const newUser = new User({
             regId,
             email,
-            password: hashedPassword,
+            password: hashedPassword, // Save the hashed version
+
             role,
-            isVerified: role === 'student'
+            // 2. Add 'branch' to the new User instance
+            branch: role !== 'admin' ? branch : undefined,
+            year: role === 'student' ? year : undefined,
+            graduationYear: role === 'alumni' ? graduationYear : undefined
         });
 
-        await user.save();
-
-        res.status(201).json({
-            message: "User registered successfully",
-            verification: role === 'alumni' ? "Pending admin approval" : "Verified"
-        });
-
-    } catch (error) {
-        res.status(500).json({ message: "Server error" });
+        await newUser.save();
+        res.status(201).json({ message: "User registered successfully" });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
     }
 });
 

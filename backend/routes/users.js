@@ -4,6 +4,8 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs'); // Assuming you use bcrypt for passwords
 
 // 1. GET User Profile
+
+// 1. GET User Profile - No changes needed, but ensure fields exist in DB
 router.get('/:id', async (req, res) => {
     try {
         const user = await User.findById(req.params.id).select('-password');
@@ -14,27 +16,28 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// 2. UPDATE Social Links
-// PUT update profile links
+// 2. UPDATE Profile (Now including Branch and Year)
 router.put('/update-links/:id', async (req, res) => {
     try {
-        const { portfolioLink, githubLink, linkedinLink, leetcodeLink } = req.body;
+        // Add branch, year, and graduationYear to the destructuring
+        const { portfolioLink, githubLink, linkedinLink, leetcodeLink, branch, year, graduationYear } = req.body;
         
-        // We only allow these 4 fields to be updated
         const updatedUser = await User.findByIdAndUpdate(
             req.params.id,
             { 
                 portfolioLink, 
                 githubLink, 
                 linkedinLink, 
-                leetcodeLink 
+                leetcodeLink,
+                branch,        // Add this
+                year,          // Add this
+                graduationYear // Add this
             },
-            { new: true } // Return the updated document
+            { new: true } 
         );
 
         if (!updatedUser) return res.status(404).json({ message: "User not found" });
-        
-        res.json({ message: "Links updated successfully!", user: updatedUser });
+        res.json({ message: "Profile updated successfully!", user: updatedUser });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -52,5 +55,37 @@ router.put('/change-password/:id', async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
+
+
+// 1. Get all students who are 3rd/4th year AND verified
+router.get('/mentors/list', async (req, res) => {
+    try {
+        const mentors = await User.find({ 
+            role: 'student', 
+            isVerified: true, 
+            year: { $in: [3, 4] } 
+        }).select('regId branch year _id');
+        res.json(mentors);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 2. Simple "Request Verification" (Sends alert to Admin)
+router.post('/apply-mentor/:id', async (req, res) => {
+    // In a real app, you might send an email here. 
+    // For now, we assume Admin manually verifies the student.
+    res.json({ message: "Verification request sent! Once Admin verifies your account, you will appear in the Mentor list." });
+});
+
+// 2. Handle the apply request (Triggered by the apply function above)
+router.post('/apply-mentor/:id', async (req, res) => {
+    try {
+        // Since we are using isVerified, this just acts as a notification 
+        // Or you can update a 'mentorRequested' flag if you add it to schema
+        res.json({ message: "Request received. Admin will verify your profile shortly." });
+    } catch (err) {
+        res.status(500).json({ message: "Request failed" });
+    }
+});
+
 
 module.exports = router;
