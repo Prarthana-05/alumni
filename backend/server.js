@@ -1,50 +1,33 @@
 const express = require('express');
+const http = require('http'); // 1. Added
+const { Server } = require('socket.io'); // 2. Added
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
+const server = http.createServer(app); // 3. Wrap App
 
-/* ---------------- Middleware ---------------- */
+// 4. Configure Socket.io
+const io = new Server(server, {
+    cors: { origin: "*" } // Allows frontend to connect
+});
+
 app.use(express.json());
 app.use(cors());
 
-/* ---------------- Routes (TOP LEVEL CALL) ---------------- */
-const authRoutes = require('./routes/auth'); // Points to auth.js
-// later you can add more:
-// const adminRoutes = require('./routes/adminRoutes');
+// 5. Make 'io' accessible in routes
+app.set('socketio', io);
 
-app.use('/api/auth', authRoutes);
+// Database Connection
+mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/alumniNexus')
+    .then(() => console.log('✅ MongoDB Connected'))
+    .catch(err => console.error(err));
 
-/* ---------------- Config ---------------- */
-const PORT = process.env.PORT || 5000;
-const MONGO_URI =
-  process.env.MONGO_URI || 'mongodb://localhost:27017/alumniNexus';
+// Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/jobs', require('./routes/jobs'));
 
-/* ---------------- MongoDB Connection ---------------- */
-mongoose
-  .connect(MONGO_URI)
-  .then(() => {
-    console.log('------------------------------------');
-    console.log('✅ DATABASE STATUS: Connected Successfully');
-    console.log(`📡 MongoDB URI: ${MONGO_URI}`);
-    console.log('------------------------------------');
-  })
-  .catch((err) => {
-    console.error('❌ DATABASE CONNECTION FAILED');
-    console.error(err.message);
-    process.exit(1);
-  });
-
-/* ---------------- Test Route ---------------- */
-app.get('/', (req, res) => {
-  res.send('Alumni Nexus Backend Running 🚀');
-});
-
-/* ---------------- Start Server ---------------- */
-app.listen(PORT, () => {
-  console.log('\n====================================');
-  console.log('🚀 SERVER STATUS: RUNNING');
-  console.log(`🔗 URL: http://localhost:${PORT}`);
-  console.log('====================================');
-});
+// 6. Use server.listen instead of app.listen
+const PORT = 5000;
+server.listen(PORT, () => console.log(`🚀 Real-time Server on port ${PORT}`));

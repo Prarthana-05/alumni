@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard | Alumni Nexus</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>Nexus<span>.</span></h2>
+            </div>
+            <ul>
+                <li class="active"><a href="#"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="#"><i class="fas fa-briefcase"></i> Jobs & Referrals</a></li>
+                <li><a href="#"><i class="fas fa-user-graduate"></i> Mentors</a></li>
+                <li><a href="#"><i class="fas fa-calendar-alt"></i> Events</a></li>
+                <li><a href="#"><i class="fas fa-user-circle"></i> Profile</a></li>
+            </ul>
+            <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </nav>
+
+        <main class="main-content">
+            <header>
+                <div class="welcome-text">
+                    <h1>Welcome back, <span id="studentName">Student</span>!</h1>
+                    <p>Check out the latest opportunities from your alumni network.</p>
+                </div>
+                <div class="status-badge" id="verificationBadge">
+                    <i class="fas fa-check-circle"></i> Verified Student
+                </div>
+            </header>
+
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-paper-plane"></i>
+                    <div>
+                        <h3>12</h3>
+                        <p>Applications</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-comments"></i>
+                    <div>
+                        <h3>4</h3>
+                        <p>Messages</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="feed-section">
+                <h2>Latest Job Referrals</h2>
+                <div id="jobFeed" class="job-list">
+                    <p>Loading opportunities...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
