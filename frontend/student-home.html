@@ -6,7 +6,6 @@
     <title>Student Dashboard | Alumni Nexus</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
 </head>
 <body>
     <div class="dashboard-container">
@@ -17,7 +16,7 @@
             <ul>
                 <li class="active"><a href="#"><i class="fas fa-home"></i> Home</a></li>
                 <li><a href="#"><i class="fas fa-briefcase"></i> Jobs & Referrals</a></li>
-                <li><a href="#"><i class="fas fa-user-graduate"></i> Mentors</a></li>
+                <li><a href="#"><i class="fas fa-envelope-open-text"></i> My Applications</a></li>
                 <li><a href="#"><i class="fas fa-calendar-alt"></i> Events</a></li>
                 <li><a href="#"><i class="fas fa-user-circle"></i> Profile</a></li>
             </ul>
@@ -25,46 +24,103 @@
         </nav>
 
         <main class="main-content">
-    <header>
-        <div class="welcome-text">
-            <h1>Welcome back, <span id="studentName">Student</span>!</h1>
-            <p id="viewSubtitle">Check out the latest from your alumni network.</p>
+            <header>
+                <div class="welcome-text">
+                    <h1>Welcome back, <span id="studentName">Student</span>!</h1>
+                    <p id="viewSubtitle">Check out the latest from your alumni network.</p>
+                </div>
+                <div class="status-badge" id="verificationBadge">
+                    <i class="fas fa-check-circle"></i> Verified Student
+                </div>
+            </header>
+
+            <div id="homeView" class="dashboard-view view-section">
+                <section class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-paper-plane"></i>
+                        <div><h3>12</h3><p>Applications</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-comments"></i>
+                        <div><h3>4</h3><p>Messages</p></div>
+                    </div>
+                </section>
+
+                <section class="feed-section">
+                    <h2>Latest Job Referrals</h2>
+                    <div id="jobFeed" class="job-list">
+                        <p>Loading opportunities...</p>
+                    </div>
+                </section>
+            </div>
+
+            <div id="eventsView" class="dashboard-view view-section" style="display: none;">
+                <section class="feed-section">
+                    <h2>Upcoming Events</h2>
+                    <div id="eventFeed" class="job-list">
+                        <p>Loading events...</p>
+                    </div>
+                </section>
+            </div>
+
+            <div id="applicationsView" class="dashboard-view view-section" style="display: none;">
+                <section class="feed-section">
+                    <h2>My Referral Requests</h2>
+                    <p>Track your sent requests and chat with alumni.</p>
+                    <div id="applicationFeed" class="job-list">
+                        <p>Loading your applications...</p>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <div id="jobModal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close-btn" onclick="document.getElementById('jobModal').style.display='none'">&times;</span>
+                <h2 id="modalTitle">Job Title</h2>
+                <p id="modalCompany">Company Name</p>
+                <hr>
+                
+                <div class="modal-tabs">
+                    <button class="tab-btn active" onclick="showTab('applyTab')">Quick Apply</button>
+                    <button class="tab-btn" onclick="showTab('referralTab')">Request Referral</button>
+                </div>
+
+                <div id="applyTab" class="tab-content">
+                    <form id="applyForm">
+                        <input type="text" placeholder="Full Name" required>
+                        <input type="text" placeholder="Branch (e.g., Computer Engineering)" required>
+                        <input type="number" step="0.01" placeholder="Current CGPA" required>
+                        <input type="url" placeholder="Link to Resume (Drive/Dropbox)" required>
+                        <button type="submit" class="apply-btn">Submit Application</button>
+                    </form>
+                </div>
+
+                <div id="referralTab" class="tab-content" style="display:none;">
+                    <p>Message the Alumni to introduce yourself and ask for a referral.</p>
+                    <textarea id="refMessage" placeholder="Hi, I am interested in this role because..."></textarea>
+                    <button type="button" onclick="sendReferralRequest()" class="apply-btn" style="background:#8b5cf6">Send Message</button>
+                </div>
+            </div>
         </div>
-        <div class="status-badge" id="verificationBadge">
-            <i class="fas fa-check-circle"></i> Verified Student
+
+        <div id="chatModal" class="modal" style="display:none; justify-content:center; align-items:center;">
+            <div class="modal-content" style="width: 450px; height: 80vh; display: flex; flex-direction: column;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3>Chat with Alumni</h3>
+                    <span class="close-btn" onclick="document.getElementById('chatModal').style.display='none'">&times;</span>
+                </div>
+                <hr>
+                <div id="chatBox" style="flex-grow: 1; overflow-y: auto; padding: 10px; background: #f9f9f9; border-radius: 8px; margin: 10px 0; display: flex; flex-direction: column;">
+                    </div>
+                <div class="chat-input-area" style="display: flex; gap: 10px;">
+                    <input type="text" id="chatInput" placeholder="Type a message..." style="flex-grow: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    <button onclick="sendMessage()" class="apply-btn" style="width: auto; padding: 0 20px;">Send</button>
+                </div>
+            </div>
         </div>
-    </header>
-
-    <div id="homeView" class="dashboard-view">
-        <section class="stats-grid">
-            <div class="stat-card">
-                <i class="fas fa-paper-plane"></i>
-                <div><h3>12</h3><p>Applications</p></div>
-            </div>
-            <div class="stat-card">
-                <i class="fas fa-comments"></i>
-                <div><h3>4</h3><p>Messages</p></div>
-            </div>
-        </section>
-
-        <section class="feed-section">
-            <h2>Latest Job Referrals</h2>
-            <div id="jobFeed" class="job-list">
-                <p>Loading opportunities...</p>
-            </div>
-        </section>
     </div>
 
-    <div id="eventsView" class="dashboard-view" style="display: none;">
-        <section class="feed-section">
-            <h2>Upcoming Events</h2>
-            <div id="eventFeed" class="job-list">
-                <p>Loading events...</p>
-            </div>
-        </section>
-    </div>
-</main>
-    </div>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="js/dashboard.js"></script>
 </body>

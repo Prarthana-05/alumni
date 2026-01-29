@@ -5,8 +5,12 @@ const jobSchema = new mongoose.Schema({
     company: { type: String, required: true },
     category: { type: String, required: true },
     description: { type: String },
-    postedBy: { type: String }, // This will be the Alumni's name or ID
+    // Links to the Alumni User who posted it
+    postedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, 
     createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Job', jobSchema);
+// Use the singleton pattern to prevent "OverwriteModelError"
+const Job = mongoose.models.Job || mongoose.model('Job', jobSchema);
+
+module.exports = Job;

@@ -5,7 +5,6 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const password = document.getElementById('password').value;
     const messageBox = document.getElementById('loginMessage');
 
-    // 1. Frontend validation
     if (!email.endsWith('.edu')) {
         updateMessage("Invalid domain. Please use your .edu email.", "red");
         return;
@@ -14,40 +13,42 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     updateMessage("Authenticating...", "blue");
 
     try {
-        // 2. REAL BACKEND CALL
         const response = await fetch('http://localhost:5000/api/auth/login', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
 
         const data = await response.json();
 
         if (response.ok) {
-            // 3. Store the REAL JWT and User Data
-            // We use 'token' to match the key sent by your server.js
+            // 1. SAVE TO LOCAL STORAGE
             localStorage.setItem('nexus_token', data.token);
             localStorage.setItem('user_role', data.user.role);
-            localStorage.setItem('regId', data.user.id);
+            localStorage.setItem('userName', data.user.name || "Student");
+
+            // 2. THE ID FIX: Try all common paths for the MongoDB _id
+            const mongoId = data.user._id || data.user.id || data.id;
+            
+            if (mongoId) {
+                localStorage.setItem('userId', mongoId);
+            } else {
+                console.error("Critical: MongoDB ID not found in server response", data);
+            }
+
+            // 3. Keep roll number/regId if needed for display
+            localStorage.setItem('regId', data.user.rollNo || data.user.id);
 
             updateMessage("Login successful! Redirecting...", "green");
 
-            // 4. Role-Based Redirection
             setTimeout(() => {
                 const role = data.user.role;
-                if (role === 'admin') {
-                    window.location.href = 'admin-dashboard.html';
-                } else if (role === 'alumni') {
-                    window.location.href = 'alumni-portal.html';
-                } else {
-                    window.location.href = 'student-home.html';
-                }
+                if (role === 'admin') window.location.href = 'admin-dashboard.html';
+                else if (role === 'alumni') window.location.href = 'alumni-portal.html';
+                else window.location.href = 'student-home.html';
             }, 1500);
 
         } else {
-            // Show the error message from the server (e.g., "Invalid Credentials")
             updateMessage(data.message || "Login failed", "red");
         }
 
@@ -59,14 +60,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
 function updateMessage(text, color) {
     const box = document.getElementById('loginMessage');
-    
-    // Simple color mapping
-    const colors = {
-        red: "#ef4444",
-        green: "#22c55e",
-        blue: "#2563eb"
-    };
-
+    const colors = { red: "#ef4444", green: "#22c55e", blue: "#2563eb" };
     box.style.color = colors[color] || "#000";
     box.style.textAlign = "center";
     box.style.marginTop = "1rem";

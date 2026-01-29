@@ -1,15 +1,21 @@
 const express = require('express');
 const router = express.Router();
-const Job = require('../models/Jobs');
+// IMPORTANT: Ensure the file is named 'Jobs.js' in the models folder
+const Job = require('../models/Jobs'); 
 
-// 1. GET ALL JOBS (For initial dashboard load)
+// 1. GET ALL JOBS
 router.get('/all', async (req, res) => {
     try {
+        // Validation: Ensure Job model is loaded correctly
+        if (!Job || typeof Job.find !== 'function') {
+            throw new Error("Job model not initialized correctly. Check models/Jobs.js export.");
+        }
+
         const jobs = await Job.find().sort({ createdAt: -1 }); // Newest first
         res.json(jobs);
     } catch (err) {
-        console.error("Fetch Error:", err.message);
-        res.status(500).json({ message: "Error fetching jobs" });
+        console.error("Backend Job Fetch Error:", err.message);
+        res.status(500).json({ message: err.message, data: [] });
     }
 });
 
@@ -18,7 +24,6 @@ router.post('/post', async (req, res) => {
     try {
         const { title, company, category, description, postedBy } = req.body;
 
-        // Save to MongoDB
         const newJob = new Job({
             title,
             company,
@@ -30,20 +35,19 @@ router.post('/post', async (req, res) => {
         const savedJob = await newJob.save();
 
         // --- REAL-TIME TRIGGER ---
-        // Retrieve the Socket.io instance we set in server.js
         const io = req.app.get('socketio');
-        
-        // Emit (Broadcast) the new job to everyone connected
-        io.emit('newJobPosted', savedJob); 
-        // -------------------------
+        if (io) {
+            io.emit('newJobPosted', savedJob); 
+            console.log(`📢 Real-time broadcast: New job at ${company}`);
+        }
 
         res.status(201).json({ message: "Job posted successfully!", job: savedJob });
-        console.log(`📢 Real-time broadcast: New job at ${company}`);
 
     } catch (err) {
         console.error("Post Error:", err.message);
-        res.status(500).json({ message: "Failed to post job" });
+        res.status(500).json({ message: "Failed to post job", error: err.message });
     }
 });
 
+// ONLY ONE EXPORT AT THE BOTTOM
 module.exports = router;
