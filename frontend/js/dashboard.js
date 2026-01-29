@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('viewSubtitle').innerText = "Check out the latest opportunities.";
                 fetchJobs();
             } else if (text === "Events") {
-                showView('homeView'); // Or eventsView if you have a separate div
+                showView('eventsView'); // Or eventsView if you have a separate div
                 document.getElementById('viewSubtitle').innerText = "Never miss an alumni meet or webinar.";
                 fetchEvents();
             } else if (text === "My Applications") {
@@ -162,16 +162,37 @@ function renderApplications(apps) {
         container.innerHTML = '<p>You haven\'t applied for any referrals yet.</p>';
         return;
     }
-    container.innerHTML = apps.map(app => `
-        <div class="job-card" style="border-left: 5px solid #10b981">
-            <h3>${app.jobId?.title || 'Referral Request'}</h3>
-            <p>Company: ${app.jobId?.company || 'N/A'}</p>
-            <p>Status: <span class="badge">${app.status}</span></p>
-            <button class="apply-btn" onclick="openChat('${app._id}')" style="background:#10b981">
-                Chat with Alumni
-            </button>
-        </div>
-    `).join('');
+
+    container.innerHTML = apps.map(app => {
+        // Determine color based on status
+        let statusColor = "#6b7280"; // Default Gray (Applied)
+        if (app.status === 'referred') statusColor = "#10b981"; // Green
+        if (app.status === 'rejected') statusColor = "#ef4444"; // Red
+
+        return `
+            <div class="job-card" style="border-left: 5px solid ${statusColor}">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>${app.jobId?.title || 'Referral Request'}</h3>
+                    <span class="status-badge" style="background: ${statusColor}; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; text-transform: uppercase;">
+                        ${app.status}
+                    </span>
+                </div>
+                <p>Company: <strong>${app.jobId?.company || 'N/A'}</strong></p>
+                <p style="font-size: 0.9rem; color: #666;">Applied on: ${new Date(app.appliedAt).toLocaleDateString()}</p>
+                
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    <button class="apply-btn" onclick="openChat('${app._id}')" style="background:#10b981; flex: 1;">
+                        <i class="fas fa-comments"></i> Chat with Alumni
+                    </button>
+                    ${app.status === 'referred' ? `
+                        <div style="color: #10b981; font-weight: bold; display: flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-check-circle"></i> Referred!
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 function showView(viewId) {
@@ -180,16 +201,59 @@ function showView(viewId) {
     if (target) target.style.display = 'block';
 }
 
-function openJobModal(jobId, title, company, alumniId) {
-    document.getElementById('jobModal').style.display = 'flex';
+async function openJobModal(jobId, title, company, alumniId) {
+    const studentId = localStorage.getItem('userId');
+    const modal = document.getElementById('jobModal');
+    const form = document.getElementById('applyForm');
+    
+    // 1. Basic Modal Setup
+    modal.style.display = 'flex';
     document.getElementById('modalTitle').innerText = title;
     document.getElementById('modalCompany').innerText = company;
-    // Store IDs in the form
-    const form = document.getElementById('applyForm');
+    
+    // 2. Set default data attributes
     form.dataset.jobId = jobId;
     form.dataset.alumniId = alumniId;
+    form.dataset.applicationId = ""; // Reset for every new open
+
+    // 3. CHECK IF ALREADY APPLIED
+    try {
+        const res = await fetch(`http://localhost:5000/api/applications/check?jobId=${jobId}&studentId=${studentId}`);
+        const data = await res.json();
+
+        if (data.exists) {
+            console.log("Existing application found:", data.applicationId);
+            // Save the ID so sendReferralRequest knows to just CHAT
+            form.dataset.applicationId = data.applicationId;
+            currentApplicationId = data.applicationId; 
+            
+            // Join the socket room and load messages
+            socket.emit('joinChat', data.applicationId);
+            loadModalChatHistory(data.applicationId);
+        } else {
+            // New application: clear the chat box
+            document.getElementById('chatBoxInModal').innerHTML = 
+                '<p class="text-center">No conversation yet. Send a message to start!</p>';
+        }
+    } catch (err) {
+        console.error("Error checking application status:", err);
+    }
 }
 
+// Helper to load history into the modal specifically
+async function loadModalChatHistory(appId) {
+    const chatBox = document.getElementById('chatBoxInModal');
+    chatBox.innerHTML = '<p class="text-center">Loading history...</p>';
+    
+    try {
+        const res = await fetch(`http://localhost:5000/api/messages/${appId}`);
+        const history = await res.json();
+        chatBox.innerHTML = '';
+        history.forEach(msg => appendChatMessage(msg)); // Reuses your existing append function
+    } catch (err) {
+        chatBox.innerHTML = '<p>Error loading messages.</p>';
+    }
+}
 // Handle Application Form
 document.getElementById('applyForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -248,62 +312,122 @@ function showTab(tabId) {
 }
 
 
-// Global scope function for the "Send Message" button in the Referral Tab
 async function sendReferralRequest() {
     const studentId = localStorage.getItem('userId') || localStorage.getItem('regId');
-    const messageText = document.getElementById('refMessage').value;
-    
-    // Safety check: Get IDs from the modal's data attributes
+    const messageText = document.getElementById('refMessage').value.trim();
     const form = document.getElementById('applyForm');
-    const jobId = form.dataset.jobId;
-    const alumniId = form.dataset.alumniId;
+    
+    // Check if we already stored an Application ID in the modal from a previous check
+    const existingAppId = form.dataset.applicationId; 
 
-    if (!messageText.trim()) {
+    if (!messageText) {
         alert("Please enter a message.");
         return;
     }
 
-    const formData = {
-        jobId,
-        alumniId,
-        studentId,
-        studentName: localStorage.getItem('userName') || "Student",
-        branch: "Computer Engineering",
-        cgpa: 0,
-        resumeLink: "Pending",
-        status: 'applied'
-    };
-
-    try {
-        const res = await fetch('http://localhost:5000/api/applications/apply', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
+    if (existingAppId) {
+        // --- SCENARIO A: ALREADY APPLIED (Chat Only) ---
+        socket.emit('sendMessage', {
+            applicationId: existingAppId,
+            senderId: studentId,
+            text: messageText
         });
+        
+        // Clear input and show feedback
+        document.getElementById('refMessage').value = "";
+        console.log("Chat message sent to existing application.");
+    } else {
+        // --- SCENARIO B: FIRST TIME (Apply + Chat) ---
+        const formData = {
+            jobId: form.dataset.jobId,
+            alumniId: form.dataset.alumniId,
+            studentId: studentId,
+            studentName: localStorage.getItem('userName') || "Student",
+            branch: "Computer Engineering",
+            cgpa: 0,
+            resumeLink: "Pending",
+            status: 'applied'
+        };
 
-        const data = await res.json();
-        console.log("Response from server:", data); // <--- CHECK THIS IN BROWSER CONSOLE (F12)
+        try {
+            const res = await fetch('http://localhost:5000/api/applications/apply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
 
-        if (res.ok) {
-            // FIX: Ensure we pick the ID correctly from your backend response
-            // If your backend sends { application: { _id: ... } } use data.application._id
-            const appId = data.application ? data.application._id : null;
+            const data = await res.json();
 
-            if (appId) {
+            if (res.ok) {
+                // Save the new ID to the form so subsequent clicks follow Scenario A
+                form.dataset.applicationId = data.application._id;
+
                 socket.emit('sendMessage', {
-                    applicationId: appId,
+                    applicationId: data.application._id,
                     senderId: studentId,
-                    text: `[REFERRAL REQUEST]: ${messageText}`
+                    text: `[NEW REQUEST]: ${messageText}`
                 });
-                alert("Referral request and message sent!");
-            } else {
-                console.error("Application ID missing in response data:", data);
-                alert("Request sent, but chat failed to initialize.");
-            }
 
-            document.getElementById('jobModal').style.display = 'none';
+                alert("Application submitted successfully!");
+                updateAppStats(); // Refresh the counter on home page
+            } else {
+                alert(data.message || "Error submitting application");
+            }
+        } catch (err) {
+            console.error("Critical Error:", err);
         }
+    }
+}
+
+
+async function updateAppStats() {
+    const studentId = localStorage.getItem('userId');
+    try {
+        const res = await fetch(`http://localhost:5000/api/applications/student/${studentId}`);
+        const apps = await res.json();
+        
+        // Update the number in the H3 tag
+        document.getElementById('totalApps').innerText = apps.length;
     } catch (err) {
-        console.error("Referral Error:", err);
+        console.error("Error updating stats:", err);
+    }
+}
+
+// Call this when the dashboard loads
+updateAppStats();
+
+
+async function fetchEvents() {
+    try {
+        const res = await fetch('http://localhost:5000/api/events/all');
+        const events = await res.json();
+        
+        const container = document.getElementById('eventFeed');
+        if (!container) return; // Safety check
+
+        if (!events || events.length === 0) {
+            container.innerHTML = '<p>No upcoming events at the moment.</p>';
+            return;
+        }
+
+        container.innerHTML = events.map(event => `
+            <div class="job-card" style="border-left: 5px solid #8b5cf6">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <h3>${event.title}</h3>
+                    <span style="background: #ede9fe; color: #8b5cf6; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">EVENT</span>
+                </div>
+                <p style="color: #6b7280; margin: 8px 0;">
+                    <i class="fas fa-calendar-day"></i> <strong>${event.date}</strong>
+                </p>
+                <p>${event.description || 'No description provided.'}</p>
+                ${event.link ? `
+                    <a href="${event.link}" target="_blank" class="apply-btn" style="background:#8b5cf6; display:inline-block; text-align:center; text-decoration:none; margin-top: 10px;">
+                        Register / Join Link
+                    </a>` : ''}
+            </div>
+        `).join('');
+    } catch (err) {
+        console.error("Error fetching events:", err);
+        document.getElementById('eventFeed').innerHTML = '<p>Error loading events. Please try again later.</p>';
     }
 }

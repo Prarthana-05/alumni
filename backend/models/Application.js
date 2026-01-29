@@ -13,5 +13,8 @@ const applicationSchema = new mongoose.Schema({
     appliedAt: { type: Date, default: Date.now }
 });
 
+// ADD THIS: This prevents (Student A + Job A) from appearing twice
+applicationSchema.index({ jobId: 1, studentId: 1 }, { unique: true });
+
 const Application = mongoose.models.Application || mongoose.model('Application', applicationSchema);
 module.exports = Application;

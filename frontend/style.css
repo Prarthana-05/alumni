@@ -508,3 +508,28 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 .tab-btn { border: none; background: none; padding: 10px; cursor: pointer; font-weight: bold; }
 .tab-btn.active { border-bottom: 3px solid #2563eb; color: #2563eb; }
 .tab-content form input, .tab-content textarea { width: 100%; margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+
+
+
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem;
+}
+
+.view-btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: 0.3s;
+}
+
+.view-btn:hover {
+    background: #1d4ed8;
+}
