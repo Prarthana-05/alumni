@@ -3,6 +3,8 @@ const router = express.Router();
 const Application = require('../models/Application');
 const Job = require('../models/Jobs');
 
+
+
 // 1. GET applications for a specific student (For the 'My Applications' page)
 router.get('/student/:studentId', async (req, res) => {
     try {
@@ -19,6 +21,9 @@ router.get('/student/:studentId', async (req, res) => {
         res.status(500).json({ message: "Server error fetching applications" });
     }
 });
+
+
+
 
 // 2. POST apply for a job
 router.post('/apply', async (req, res) => {
@@ -85,6 +90,20 @@ router.get('/check', async (req, res) => {
     }
 });
 
+
+router.get('/:id', async (req, res) => {
+    try {
+        const app = await Application.findById(req.params.id)
+            .populate('studentId')
+            .populate('alumniId')
+            .populate('jobId');
+        
+        if (!app) return res.status(404).json({ message: "Application not found" });
+        res.json(app);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // Example of a Status Update Route
 router.patch('/update-status/:id', async (req, res) => {
