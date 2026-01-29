@@ -30,6 +30,9 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/events', require('./routes/events'));
 app.use('/api/applications', require('./routes/applications'));
+// Inside server.js
+const userRoutes = require('./routes/users');
+app.use('/api/users', userRoutes);
 app.use('/api/messages', messageRoutes);
 
 // --- Socket.io Real-time Logic ---
