@@ -27,6 +27,9 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/alumniNexus
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/jobs', require('./routes/jobs'));
+app.use('/api/events', require('./routes/events'));
+
+
 
 // 6. Use server.listen instead of app.listen
 const PORT = 5000;
