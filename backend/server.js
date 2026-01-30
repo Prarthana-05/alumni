@@ -1,18 +1,20 @@
 const express = require('express');
-const http = require('http'); 
-const { Server } = require('socket.io'); 
+const http = require('http');
+const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config();
+const path = require('path');
+require("dotenv").config();
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const Message = require('./models/Message');
 const messageRoutes = require('./routes/messages');
 
 const app = express();
-const server = http.createServer(app); 
+const server = http.createServer(app);
 
 const io = new Server(server, {
-    cors: { origin: "*" } 
+    cors: { origin: "*" }
 });
 
 app.use(express.json());
@@ -34,6 +36,7 @@ app.use('/api/applications', require('./routes/applications'));
 const userRoutes = require('./routes/users');
 app.use('/api/users', userRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/experiences', require('./routes/experiences'));
 
 // --- Socket.io Real-time Logic ---
 io.on('connection', (socket) => {
@@ -47,12 +50,12 @@ io.on('connection', (socket) => {
 
     // 2. Handle sending a message
     socket.on('sendMessage', async (data) => {
-        console.log("Socket received data:", data); 
+        console.log("Socket received data:", data);
         const { applicationId, senderId, text } = data;
-        
+
         try {
             // Check if all data is present before saving
-            if(!applicationId || !senderId || !text) {
+            if (!applicationId || !senderId || !text) {
                 throw new Error("Missing required fields: applicationId, senderId, or text");
             }
 
@@ -78,5 +81,5 @@ io.on('connection', (socket) => {
 });
 
 // Use server.listen instead of app.listen
-const PORT = 5000;
+const PORT = 5001;
 server.listen(PORT, () => console.log(`🚀 Real-time Server on port ${PORT}`));

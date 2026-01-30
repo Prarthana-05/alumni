@@ -1,0 +1,45 @@
+ Alumni Engagement & Networking
+Platform
+Design and develop a full-stack web platform that strengthens long-term
+connections between alumni and students. The system should enable
+professional networking, mentorship, career guidance, and institutional
+engagement in a structured and trustworthy manner.
+Objective
+To create a centralized, verified, and purpose-driven alumni ecosystem that
+actively supports student growth, alumni visibility, and institutional
+collaboration.
+Core Functional Requirements
+Roles & Access Control
+• Defined user roles:
+o Admin/Faculty: Moderation, verification, analytics, and
+governance.
+o Alumni: Verified graduates with extended engagement
+capabilities.
+o Student: Current students seeking guidance and opportunities.
+Alumni Verification & Profile Management
+• Mandatory alumni verification through institute-approved
+mechanisms.
+• Rich alumni profiles with education details, graduation year,
+department, current role, organization, industry, or startup
+information.
+• Profile updates for job changes, startups, promotions, and
+milestones.
+• Moderated visibility requests for funding, promotions, or
+announcements.
+Opportunities, Mentorship & Engagement
+• Alumni-driven postings for mentorship, jobs, internships, and events.
+• Students can apply, request mentorship, or register interest with
+filtering options.
+Referral & Guidance System
+• Structured referral requests with approval, decline, or guidance
+options.
+• Anti-spam safeguards including request limits and moderation.
+• Dedicated guidance section for careers, industry insights, higher
+studies, and entrepreneurship.
+Interview Experience Knowledge Base
+• Curated, blog-style repository of interview experiences.
+• Filterable by company, role, domain, and difficulty level.
+• Contributions moderated and focused on learning.
+Analytics & Insights
+• Admin dashboards for alumni participation, student–alumni
+interactions, mentorship activity, and popular domains or roles.

@@ -1,19 +1,8 @@
 const router = require('express').Router();
-const Event = require('../models/Event');
+const eventController = require('../controllers/eventController');
 
-router.post('/post', async (req, res) => {
-    const newEvent = new Event(req.body);
-    await newEvent.save();
-    
-    // Broadcast real-time
-    req.app.get('socketio').emit('newEvent', newEvent);
-    
-    res.json(newEvent);
-});
+router.post('/post', eventController.postEvent);
 
-router.get('/all', async (req, res) => {
-    const events = await Event.find().sort({ createdAt: -1 });
-    res.json(events);
-});
+router.get('/all', eventController.getAllEvents);
 
 module.exports = router;
